@@ -1,4 +1,7 @@
 import os
+# Set these variables before importing LlamaIndex or SentenceTransformer
+os.environ["HF_DATASETS_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
 from pathlib import Path
 
 # Core LlamaIndex Modules
@@ -34,9 +37,6 @@ def run_local_rag():
     input_dir = Path(DOCS_DIR)
     db_path = Path(DB_DIR)
 
-    if not input_dir.exists() or not input_dir.is_dir():
-        print(f"[Error] Target directory '{input_dir}' does not exist.")
-        return
 
     # -------------------------------------------------------------------------
     # 2. LOCAL GLOBAL MODEL SETTINGS
@@ -94,6 +94,9 @@ def run_local_rag():
     else:
         # INGEST NEW: Database is empty, parse your physical documents
         print(f"[3/4] Database empty ({vector_count} vectors). Ingesting files from: {input_dir}")
+        if not input_dir.exists() or not input_dir.is_dir():
+            print(f"[Error] Target directory '{input_dir}' does not exist.")
+            return
         reader = SimpleDirectoryReader(input_dir=str(input_dir), required_exts=[".txt"])
         documents = reader.load_data()
         
@@ -128,6 +131,7 @@ def run_local_rag():
 
     # Fast Local Reranking: Broaden the initial fetch to catch relevant keywords,
     # then squeeze it through a localized cross-encoder model to identify matches.
+    #local_reranker_path = "/home/durrans/.cache/huggingface/hub/models--BAAI--bge-reranker-large/"
     local_reranker_path = "BAAI/bge-reranker-large"
     
     rerank_postprocessor = SentenceTransformerRerank(
