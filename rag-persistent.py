@@ -77,23 +77,49 @@ def run_local_rag():
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-    print(f"[3/4] Ingesting documents from storage path: {input_dir}")
-    reader = SimpleDirectoryReader(input_dir=str(input_dir), required_exts=[".txt"])
-    documents = reader.load_data()
+#    print(f"[3/4] Ingesting documents from storage path: {input_dir}")
+#    reader = SimpleDirectoryReader(input_dir=str(input_dir), required_exts=[".txt"])
+#    documents = reader.load_data()
 
-    if not documents:
-        print("[System] No raw text files found. Reloading existing collection indices...")
+# CRITICAL FIX: Evaluate Chroma collection size first
+    vector_count = chroma_collection.count()
+    
+    if vector_count > 0:
+        # LOAD EXISTING: If weights exist, skip directory reading entirely
+        print(f"[3/4] Found {vector_count} existing vectors in ChromaDB! Loading weights from storage...")
         index = VectorStoreIndex.from_vector_store(
             vector_store, 
             storage_context=storage_context
         )
     else:
+        # INGEST NEW: Database is empty, parse your physical documents
+        print(f"[3/4] Database empty ({vector_count} vectors). Ingesting files from: {input_dir}")
+        reader = SimpleDirectoryReader(input_dir=str(input_dir), required_exts=[".txt"])
+        documents = reader.load_data()
+        
+        if not documents:
+            print("[Error] No text files found and database is empty. Add data files first.")
+            return
+            
         index = VectorStoreIndex.from_documents(
             documents,
             storage_context=storage_context,
             show_progress=True
         )
-        print(f"[Success] Processed {len(documents)} document sources cleanly.")
+        print(f"[Success] Processed and saved {len(documents)} document sources.")
+#    if not documents:
+#        print("[System] No raw text files found. Reloading existing collection indices...")
+#        index = VectorStoreIndex.from_vector_store(
+#            vector_store, 
+#            storage_context=storage_context
+#        )
+#    else:
+#        index = VectorStoreIndex.from_documents(
+#            documents,
+#            storage_context=storage_context,
+#            show_progress=True
+#        )
+#        print(f"[Success] Processed {len(documents)} document sources cleanly.")
 
     # -------------------------------------------------------------------------
     # 4. QUERY EXECUTION ENGINE & ACCURACY PIPELINE
