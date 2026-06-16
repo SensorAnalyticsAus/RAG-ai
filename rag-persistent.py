@@ -17,7 +17,6 @@ from llama_index.core.postprocessor import SentenceTransformerRerank
 # Local Integration Modules
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-#from llama_index.vector_stores.chromadb import ChromaVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 from llama_index.core import PromptTemplate
@@ -47,8 +46,8 @@ def run_local_rag():
     # Low temperature guarantees analytical, non-creative generation
     Settings.llm = Ollama(
         model="dolphin-llama3:8b", 
-        request_timeout=180.0,
-        temperature=0.0
+        request_timeout=300.0,
+        temperature=0.5
     )
 
     # Setup Embedding Model using your locally saved model directory
@@ -58,7 +57,7 @@ def run_local_rag():
     Settings.embed_model = HuggingFaceEmbedding(
         model_name=local_embedding_path,
         device="cuda" if os.environ.get("CUDA_VISIBLE_DEVICES") else "cpu",
-        local_files_only = True
+        #local_files_only = True
     )
 
     # Accuracy Parsing: Clean chunk limits targeting precise sentence grouping
@@ -76,10 +75,6 @@ def run_local_rag():
     # Map LlamaIndex data constructs onto the underlying Chroma storage engine
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
-
-#    print(f"[3/4] Ingesting documents from storage path: {input_dir}")
-#    reader = SimpleDirectoryReader(input_dir=str(input_dir), required_exts=[".txt"])
-#    documents = reader.load_data()
 
 # CRITICAL FIX: Evaluate Chroma collection size first
     vector_count = chroma_collection.count()
@@ -110,19 +105,6 @@ def run_local_rag():
             show_progress=True
         )
         print(f"[Success] Processed and saved {len(documents)} document sources.")
-#    if not documents:
-#        print("[System] No raw text files found. Reloading existing collection indices...")
-#        index = VectorStoreIndex.from_vector_store(
-#            vector_store, 
-#            storage_context=storage_context
-#        )
-#    else:
-#        index = VectorStoreIndex.from_documents(
-#            documents,
-#            storage_context=storage_context,
-#            show_progress=True
-#        )
-#        print(f"[Success] Processed {len(documents)} document sources cleanly.")
 
     # -------------------------------------------------------------------------
     # 4. QUERY EXECUTION ENGINE & ACCURACY PIPELINE
@@ -131,7 +113,6 @@ def run_local_rag():
 
     # Fast Local Reranking: Broaden the initial fetch to catch relevant keywords,
     # then squeeze it through a localized cross-encoder model to identify matches.
-    #local_reranker_path = "/home/durrans/.cache/huggingface/hub/models--BAAI--bge-reranker-large/"
     local_reranker_path = "BAAI/bge-reranker-large"
     
     rerank_postprocessor = SentenceTransformerRerank(
@@ -142,7 +123,7 @@ def run_local_rag():
     query_engine = index.as_query_engine(
         similarity_top_k=12,  # Fetch 12 semantic options first
         node_postprocessors=[rerank_postprocessor],
-        response_mode="compact"
+        response_mode="tree_summarize"
     )
 
     # Enforced System Instruction: Locks local model output inside context bounds
@@ -166,9 +147,6 @@ def run_local_rag():
     query_engine.update_prompts(
     {"response_synthesizer:text_qa_template": strict_rag_prompt_template} 
     )
-    #query_engine.update_prompts(
-    #    {"response_synthesizer:text_qa_template": strict_rag_prompt}
-    #)
 
     # -------------------------------------------------------------------------
     # 5. USER CONSOLE RUNTIME LOOP
