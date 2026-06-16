@@ -47,7 +47,7 @@ def run_local_rag():
     Settings.llm = Ollama(
         model="dolphin-llama3:8b", 
         request_timeout=300.0,
-        temperature=0.1
+        temperature=0
     )
 
     # Setup Embedding Model using your locally saved model directory
