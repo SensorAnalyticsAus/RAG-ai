@@ -1,4 +1,4 @@
-import os
+import os,time
 # Set these variables before importing LlamaIndex or SentenceTransformer
 os.environ["HF_DATASETS_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -156,6 +156,8 @@ def run_local_rag():
     print("=" * 60)
 
     while True:
+        # Start the clock
+        start_time = time.perf_counter()
         try:
             query = input("\nEnter query: ").strip()
             if query.lower() in ["exit", "quit", "q"]:
@@ -179,6 +181,13 @@ def run_local_rag():
 
         except Exception as error:
             print(f"\n[Execution Exception]: {error}")
+
+        # Stop the clock
+        end_time = time.perf_counter()
+
+        # Calculate and print execution time
+        execution_time = end_time - start_time
+        print(f"Query took {execution_time:.0f} seconds to complete.")
 
 if __name__ == "__main__":
     run_local_rag()
