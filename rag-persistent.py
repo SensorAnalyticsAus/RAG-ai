@@ -36,7 +36,8 @@ def run_local_rag():
     input_dir = Path(DOCS_DIR)
     db_path = Path(DB_DIR)
 
-
+    LMOD="mannix/llama3.1-8b-abliterated:latest"
+    #LMOD="dolphin-llama3:8b"
     # -------------------------------------------------------------------------
     # 2. LOCAL GLOBAL MODEL SETTINGS
     # -------------------------------------------------------------------------
@@ -45,7 +46,7 @@ def run_local_rag():
     # Setup LLM via local Ollama instance (dolphin-llama3:8b)
     # Low temperature guarantees analytical, non-creative generation
     Settings.llm = Ollama(
-        model="dolphin-llama3:8b", 
+        model=LMOD, 
         request_timeout=300.0,
         temperature=0
     )
@@ -117,7 +118,7 @@ def run_local_rag():
     
     rerank_postprocessor = SentenceTransformerRerank(
         model=local_reranker_path,
-        top_n=3  # Pass only the 3 absolute highest-scoring nodes to the LLM
+        top_n=6  # Pass only the 3 absolute highest-scoring nodes to the LLM
     )
 
     query_engine = index.as_query_engine(
@@ -188,6 +189,27 @@ def run_local_rag():
         # Calculate and print execution time
         execution_time = end_time - start_time
         print(f"Query took {execution_time:.0f} seconds to complete.")
+       
+        # 4. Print results using exact class reflection mappings
+        # Check for '.model_name' first (used by Embeddings), fallback to '.model' (used by LLMs)
+        embedding_property = (
+            getattr(Settings.embed_model, "model_name", None) 
+            or getattr(Settings.embed_model, "model", "Unknown Embedding")
+        )
+
+        llm_property = (
+            getattr(Settings.llm, "model", None) 
+            or getattr(Settings.llm, "model_name", "Unknown LLM")
+        )
+
+        print("\n" + "="*50)
+        print(" RUNTIME CONFIGURATION METADATA")
+        print("="*50)
+        print(f"📦 Active Embedding : {embedding_property}")
+        print(f"🧠 Active Gen LLM    : {llm_property}")
+        cdb=chroma_collection.name
+        print(f"🗄️  Vector Database  : ChromaDB (Collection: {cdb})")
+        print("="*50 + "\n")
 
 if __name__ == "__main__":
     run_local_rag()
