@@ -119,7 +119,7 @@ def run_local_rag():
     
     rerank_postprocessor = SentenceTransformerRerank(
         model=local_reranker_path,
-        top_n=6  # Pass only the 3 absolute highest-scoring nodes to the LLM
+        top_n=3  # Pass only the 3 absolute highest-scoring nodes to the LLM
     )
 
     query_engine = index.as_query_engine(
