@@ -1,7 +1,7 @@
 import os,time
 # Set these variables before importing LlamaIndex or SentenceTransformer
-os.environ["HF_DATASETS_OFFLINE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1" # comment out if running 1st time
+os.environ["TRANSFORMERS_OFFLINE"] = "1" # comment out if running 1st time
 from pathlib import Path
 
 # Core LlamaIndex Modules
@@ -30,13 +30,14 @@ def run_local_rag():
     # 1. INPUTS 
     # -------------------------------------------------------------------------
 
-    DOCS_DIR='mytmp/txt'
-    DB_DIR='chroma_rag'
+    DOCS_DIR='mytmp/txt' # set this value
+    DB_DIR='chroma_rag'  # set this value
     
     input_dir = Path(DOCS_DIR)
     db_path = Path(DB_DIR)
 
     LMOD="mannix/llama3.1-8b-abliterated:latest"
+    EMOD="BAAI/bge-large-en-v1.5"
     #LMOD="dolphin-llama3:8b"
     # -------------------------------------------------------------------------
     # 2. LOCAL GLOBAL MODEL SETTINGS
@@ -53,7 +54,7 @@ def run_local_rag():
 
     # Setup Embedding Model using your locally saved model directory
     # Replace the string below with the absolute path if it isn't in your cache
-    local_embedding_path = "BAAI/bge-large-en-v1.5"
+    local_embedding_path = EMOD 
     
     Settings.embed_model = HuggingFaceEmbedding(
         model_name=local_embedding_path,
@@ -183,15 +184,9 @@ def run_local_rag():
         except Exception as error:
             print(f"\n[Execution Exception]: {error}")
 
-        # Stop the clock
-        end_time = time.perf_counter()
-
-        # Calculate and print execution time
-        execution_time = end_time - start_time
-        print(f"Query took {execution_time:.0f} seconds to complete.")
-       
         # 4. Print results using exact class reflection mappings
-        # Check for '.model_name' first (used by Embeddings), fallback to '.model' (used by LLMs)
+        # Check for '.model_name' first (used by Embeddings), 
+        # fallback to '.model' (used by LLMs)
         embedding_property = (
             getattr(Settings.embed_model, "model_name", None) 
             or getattr(Settings.embed_model, "model", "Unknown Embedding")
@@ -210,6 +205,13 @@ def run_local_rag():
         cdb=chroma_collection.name
         print(f"🗄️  Vector Database  : ChromaDB (Collection: {cdb})")
         print("="*50 + "\n")
+
+        # Stop the clock
+        end_time = time.perf_counter()
+
+        # Calculate and print execution time
+        execution_time = end_time - start_time
+        print(f"Query took {execution_time:.0f} seconds to complete.")
 
 if __name__ == "__main__":
     run_local_rag()
