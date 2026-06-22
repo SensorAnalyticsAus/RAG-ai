@@ -73,13 +73,14 @@ def run_local_rag():
     
     # Initialize the database engine
     chroma_client = chromadb.PersistentClient(path=str(db_path))
-    chroma_collection = chroma_client.get_or_create_collection("local_rag_collection")
+    chroma_collection = chroma_client.get_or_create_collection(
+                                                     "local_rag_collection")
     
     # Map LlamaIndex data constructs onto the underlying Chroma storage engine
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-# CRITICAL FIX: Evaluate Chroma collection size first
+    # Evaluate Chroma collection size to reload or store weights 
     vector_count = chroma_collection.count()
     
     if vector_count > 0:
@@ -114,8 +115,8 @@ def run_local_rag():
     # -------------------------------------------------------------------------
     print("[4/4] Activating Reranker and synthesis prompts...")
 
-    # Fast Local Reranking: Broaden the initial fetch to catch relevant keywords,
-    # then squeeze it through a localized cross-encoder model to identify matches.
+    # Fast Local Reranking:Broaden the initial fetch to catch relevant keywords
+    # then pass through a localized cross-encoder model to identify matches.
     local_reranker_path = RRMOD 
     
     rerank_postprocessor = SentenceTransformerRerank(
