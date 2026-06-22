@@ -36,8 +36,9 @@ def run_local_rag():
     input_dir = Path(DOCS_DIR)
     db_path = Path(DB_DIR)
 
-    LMOD="mannix/llama3.1-8b-abliterated:latest"
-    EMOD="BAAI/bge-large-en-v1.5"
+    LMOD= "mannix/llama3.1-8b-abliterated:latest" #LLM
+    EMOD= "BAAI/bge-large-en-v1.5"   #Embedding
+    RRMOD="BAAI/bge-reranker-large"  #Reranker
     #LMOD="dolphin-llama3:8b"
     # -------------------------------------------------------------------------
     # 2. LOCAL GLOBAL MODEL SETTINGS
@@ -115,7 +116,7 @@ def run_local_rag():
 
     # Fast Local Reranking: Broaden the initial fetch to catch relevant keywords,
     # then squeeze it through a localized cross-encoder model to identify matches.
-    local_reranker_path = "BAAI/bge-reranker-large"
+    local_reranker_path = RRMOD 
     
     rerank_postprocessor = SentenceTransformerRerank(
         model=local_reranker_path,
