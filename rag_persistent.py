@@ -197,10 +197,10 @@ def run_local_rag():
         print("\n" + "="*50)
         print(" RUNTIME CONFIGURATION METADATA")
         print("="*50)
-        print(f"📦 Active Embedding : {embedding_property}")
+        print(f"📦 Active Embedding  : {embedding_property}")
         print(f"🧠 Active Gen LLM    : {llm_property}")
         cdb=chroma_collection.name
-        print(f"🗄️  Vector Database  : ChromaDB (Collection: {cdb})")
+        print(f"🗄️ Vector Database   : ChromaDB (Collection: {cdb})")
         print("="*50 + "\n")
 
         # Stop the clock
