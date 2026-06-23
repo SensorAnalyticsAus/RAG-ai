@@ -2,6 +2,9 @@ import os,time
 # Set these variables before importing LlamaIndex or SentenceTransformer
 os.environ["HF_DATASETS_OFFLINE"] = "1" # comment out if running 1st time
 os.environ["TRANSFORMERS_OFFLINE"] = "1" # comment out if running 1st time
+from settings_rag import DOCS_DIR,DB_DIR,LMOD,EMOD,RRMOD,LTEMP,CHUNK_SIZE, \
+      CHUNK_OVERLAP,SIMTOP_K,RRTOP_K,RESP_MODE
+
 from pathlib import Path
 
 # Core LlamaIndex Modules
@@ -29,17 +32,8 @@ def run_local_rag():
     # -------------------------------------------------------------------------
     # 1. INPUTS 
     # -------------------------------------------------------------------------
-
-    DOCS_DIR='mytmp/txt' # set this value
-    DB_DIR='chroma_rag'  # set this value
-    
     input_dir = Path(DOCS_DIR)
     db_path = Path(DB_DIR)
-
-    LMOD= "mannix/llama3.1-8b-abliterated:latest" #LLM
-    EMOD= "BAAI/bge-large-en-v1.5"   #Embedding
-    RRMOD="BAAI/bge-reranker-large"  #Reranker
-    #LMOD="dolphin-llama3:8b"
     # -------------------------------------------------------------------------
     # 2. LOCAL GLOBAL MODEL SETTINGS
     # -------------------------------------------------------------------------
@@ -50,7 +44,7 @@ def run_local_rag():
     Settings.llm = Ollama(
         model=LMOD, 
         request_timeout=300.0,
-        temperature=0
+        temperature=LTEMP
     )
 
     # Setup Embedding Model using your locally saved model directory
@@ -64,7 +58,8 @@ def run_local_rag():
     )
 
     # Accuracy Parsing: Clean chunk limits targeting precise sentence grouping
-    Settings.node_parser = SentenceSplitter(chunk_size=512, chunk_overlap=64)
+    Settings.node_parser = SentenceSplitter(chunk_size=CHUNK_SIZE, 
+                                               chunk_overlap=CHUNK_OVERLAP)
 
     # -------------------------------------------------------------------------
     # 3. VECTOR STORAGE & INGESTION
@@ -121,13 +116,13 @@ def run_local_rag():
     
     rerank_postprocessor = SentenceTransformerRerank(
         model=local_reranker_path,
-        top_n=3  # Pass only the 3 absolute highest-scoring nodes to the LLM
+        top_n=RRTOP_K  # Pass only the 3 abs highest-scoring nodes to the LLM
     )
 
     query_engine = index.as_query_engine(
-        similarity_top_k=12,  # Fetch 12 semantic options first
+        similarity_top_k=SIMTOP_K,  # Fetch n semantic options first
         node_postprocessors=[rerank_postprocessor],
-        response_mode="tree_summarize"
+        response_mode=RESP_MODE
     )
 
     # Enforced System Instruction: Locks local model output inside context bounds
